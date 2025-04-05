@@ -19,6 +19,45 @@ const uselessCommit = {
   message: 'Bump version to 1.9.2',
 }
 
+const mergePRCommit = {
+  hash: 'b334c1c381cf9863edc83e8a549b8b712fd16e81',
+  author: 'Dmitry Dobrynin',
+  date: '2024-04-09T23:33:45+02:00',
+  subject: 'Merge pull request #123 from space',
+  body: '#123\n',
+  emoji: undefined,
+  emojiCode: undefined,
+  group: 'misc',
+  message: 'Merge pull request #123 from space',
+  siblings: [],
+}
+
+const mergeTagCommit = {
+  hash: 'b334c1c381cf9863edc83e8a549b8b712fd16e82',
+  author: 'Dmitry Dobrynin',
+  date: '2024-04-08T23:33:45+02:00',
+  subject: 'Merge tag \'tag\' into space',
+  body: 'tag\n',
+  emoji: undefined,
+  emojiCode: undefined,
+  group: 'misc',
+  message: 'Merge tag \'tag\' into space',
+  siblings: [],
+}
+
+const mergeBranchCommit = {
+  hash: 'b334c1c381cf9863edc83e8a549b8b712fd16e83',
+  author: 'Dmitry Dobrynin',
+  date: '2024-04-07T23:33:45+02:00',
+  subject: 'Merge branch \'feature\'',
+  body: 'feature\n',
+  emoji: undefined,
+  emojiCode: undefined,
+  group: 'misc',
+  message: 'Merge branch \'feature\'',
+  siblings: [],
+}
+
 const lockCommit = {
   hash: '460b79497ae7e791bc8ba8475bda8f0b93630dd9',
   author: 'John Doe',
@@ -275,6 +314,47 @@ describe('changelog', () => {
     gitSemverTags.mockImplementation(cb => cb(null, []))
 
     const { changes } = await generateChangelog(TAIL, HEAD)
+
+    expect(changes).toEqual([
+      expect.objectContaining({
+        groups: [
+          expect.objectContaining({
+            commits: [lipstickCommit],
+          }),
+        ],
+      }),
+    ])
+  })
+
+  it('should not filter merge request', async () => {
+    gitRawCommits.mockReset()
+    mockGroup([lipstickCommit, mergePRCommit, mergeTagCommit, mergeBranchCommit])
+
+    gitSemverTags.mockImplementation(cb => cb(null, []))
+
+    const { changes } = await generateChangelog(TAIL, HEAD, { skipMerge: false })
+
+    expect(changes).toEqual([
+      expect.objectContaining({
+        groups: [
+          expect.objectContaining({
+            commits: [lipstickCommit],
+          }),
+          expect.objectContaining({
+            commits: [mergePRCommit, mergeTagCommit, mergeBranchCommit],
+          }),
+        ],
+      }),
+    ])
+  })
+
+  it('should filter merge request', async () => {
+    gitRawCommits.mockReset()
+    mockGroup([lipstickCommit, mergePRCommit, mergeTagCommit, mergeBranchCommit])
+
+    gitSemverTags.mockImplementation(cb => cb(null, []))
+
+    const { changes } = await generateChangelog(TAIL, HEAD, { skipMerge: true })
 
     expect(changes).toEqual([
       expect.objectContaining({
