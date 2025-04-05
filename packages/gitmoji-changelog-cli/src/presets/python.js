@@ -1,19 +1,20 @@
 const fs = require('fs')
 const path = require('path')
 const toml = require('smol-toml')
-const { execSync } = require('child_process')
+const child_process = require('child_process')
 
 module.exports = async () => {
   try {
     const pyproject = toml.parse(fs.readFileSync('pyproject.toml', 'utf-8'))
-    const dynamicFields = pyproject.project.dynamic || []
+    const meta = pyproject.project || pyproject.tool?.poetry
+    const dynamicFields = meta.dynamic || []
 
-    const name = pyproject.project.name
+    const name = meta.name
     if (!name) {
       throw new Error('Could not find name metadata in pyproject.toml')
     }
 
-    let version = pyproject.project.version
+    let version = meta.version
     const isDynamicVersion = dynamicFields.includes('version')
     if (isDynamicVersion) {
       const backend = pyproject['build-system']?.['build-backend']
@@ -46,15 +47,15 @@ module.exports = async () => {
       throw new Error('Could not find version metadata (static or dynamic)')
     }
 
-    let description = pyproject.project.description
+    let description = meta.description || ''
     const isDynamicDescription = dynamicFields.includes('description')
     if (isDynamicDescription) {
-      let readme = pyproject.project.readme
+      let readme = meta.readme
       if (typeof readme === 'object') {
         readme = readme.file
       }
 
-      description = getDescriptionFromReadme(readme)
+      description = getDescriptionFromReadme(readme) || ''
     }
 
     return {
@@ -71,7 +72,7 @@ module.exports = async () => {
 
 function getHatchVersion() {
   try {
-    const version = execSync('hatch version', { encoding: 'utf-8' }).trim()
+    const version = child_process.execSync('hatch version', { encoding: 'utf-8' }).trim()
     return version
   } catch (e) {
     throw new Error('Failed to run `hatch version`: ' + e.message)
@@ -81,7 +82,7 @@ function getHatchVersion() {
 
 function getFlitVersion() {
   try {
-    const output = execSync('flit info', { encoding: 'utf-8' })
+    const output = child_process.execSync('flit info', { encoding: 'utf-8' })
     const match = output.match(/^Version:\s*(.+)$/m)
     if (match) return match[1].trim()
     throw new Error('Could not extract version from `flit info` output')
@@ -93,7 +94,7 @@ function getFlitVersion() {
 
 function getSetuptoolsScmVersion() {
   try {
-    return execSync('python -m setuptools_scm', { encoding: 'utf-8' }).trim()
+    return child_process.execSync('python -m setuptools_scm', { encoding: 'utf-8' }).trim()
   } catch (e) {
     throw new Error('Failed to run `setuptools_scm`: ' + e.message)
   }
@@ -102,7 +103,7 @@ function getSetuptoolsScmVersion() {
 
 function getPdmVersion() {
   try {
-    return execSync('pdm show --version', { encoding: 'utf-8' }).trim()
+    return child_process.execSync('pdm show --version', { encoding: 'utf-8' }).trim()
   } catch (e) {
     throw new Error('Failed to run `pdm show --version`: ' + e.message)
   }
@@ -111,7 +112,7 @@ function getPdmVersion() {
 
 function getDescriptionFromReadme(readmePath = 'README.md') {
   if (!fs.existsSync(readmePath)) {
-    throw new Error(`README file not found: ${readmePath}`)
+    return ''
   }
 
   const content = fs.readFileSync(readmePath, 'utf-8').trim()
