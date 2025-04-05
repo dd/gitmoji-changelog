@@ -1,5 +1,5 @@
 const fs = require('fs')
-const child_process = require('child_process')
+const ChildProcess = require('child_process')
 
 const loadProjectInfo = require('./python.js')
 
@@ -155,7 +155,7 @@ describe('getPackageInfo | python | dynamic version', () => {
       [tool.hatch.version]
       path = "src/__init__.py"
     `)
-    jest.spyOn(child_process, 'execSync').mockReturnValue('0.0.1\n')
+    jest.spyOn(ChildProcess, 'execSync').mockReturnValue('0.0.1\n')
 
     const result = await loadProjectInfo()
 
@@ -174,8 +174,8 @@ describe('getPackageInfo | python | dynamic version', () => {
       [tool.flit.module]
       name = "flit_package_name"
     `)
-    jest.spyOn(child_process, 'execSync').mockReturnValue(
-      `Module: flit_package_name\nVersion: 0.2.3`
+    jest.spyOn(ChildProcess, 'execSync').mockReturnValue(
+      'Module: flit_package_name\nVersion: 0.2.3'
     )
 
     const result = await loadProjectInfo()
@@ -194,7 +194,7 @@ describe('getPackageInfo | python | dynamic version', () => {
 
       [tool.setuptools_scm]
     `)
-    jest.spyOn(child_process, 'execSync').mockReturnValue('1.2.3\n')
+    jest.spyOn(ChildProcess, 'execSync').mockReturnValue('1.2.3\n')
 
     const result = await loadProjectInfo()
 
@@ -213,7 +213,7 @@ describe('getPackageInfo | python | dynamic version', () => {
       [tool.pdm.version]
       source = "file"
     `)
-    jest.spyOn(child_process, 'execSync').mockReturnValue('3.4.5\n')
+    jest.spyOn(ChildProcess, 'execSync').mockReturnValue('3.4.5\n')
 
     const result = await loadProjectInfo()
 
@@ -228,7 +228,6 @@ describe('getPackageInfo | python | dynamic description', () => {
 
   it('should extract description from README.md (string path)', async () => {
     fs.readFileSync.mockImplementation((filePath) => {
-      console.log(filePath)
       if (filePath === 'pyproject.toml') {
         return `
           [project]
@@ -245,6 +244,7 @@ describe('getPackageInfo | python | dynamic description', () => {
 This is a longer description.
         `
       }
+      return ''
     })
     fs.existsSync.mockReturnValue(true)
 
@@ -272,6 +272,7 @@ This is a longer description.
 More details follow...
         `
       }
+      return ''
     })
     fs.existsSync.mockReturnValue(true)
 
@@ -290,9 +291,7 @@ More details follow...
           readme = "README.md"
         `
       }
-      if (filePath === 'README.md') {
-        return ``
-      }
+      return ''
     })
     fs.existsSync.mockReturnValue(true)
 
@@ -311,6 +310,7 @@ More details follow...
           readme = "README.md"
         `
       }
+      return ''
     })
     fs.existsSync.mockReturnValue(false)
 

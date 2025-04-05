@@ -1,12 +1,11 @@
 const fs = require('fs')
-const path = require('path')
 const toml = require('smol-toml')
-const child_process = require('child_process')
+const ChildProcess = require('child_process')
 
 module.exports = async () => {
   try {
     const pyproject = toml.parse(fs.readFileSync('pyproject.toml', 'utf-8'))
-    const meta = pyproject.project || pyproject.tool?.poetry
+    const meta = pyproject.project || (pyproject.tool && pyproject.tool.poetry)
     const dynamicFields = meta.dynamic || []
 
     const name = meta.name
@@ -17,7 +16,7 @@ module.exports = async () => {
     let version = meta.version
     const isDynamicVersion = dynamicFields.includes('version')
     if (isDynamicVersion) {
-      const backend = pyproject['build-system']?.['build-backend']
+      const backend = pyproject['build-system'] && pyproject['build-system']['build-backend']
       if (!backend) {
         throw new Error('Cannot resolve dynamic version: build-backend is not set')
       }
@@ -63,7 +62,6 @@ module.exports = async () => {
       version,
       description,
     }
-
   } catch (e) {
     return null
   }
@@ -72,7 +70,7 @@ module.exports = async () => {
 
 function getHatchVersion() {
   try {
-    const version = child_process.execSync('hatch version', { encoding: 'utf-8' }).trim()
+    const version = ChildProcess.execSync('hatch version', { encoding: 'utf-8' }).trim()
     return version
   } catch (e) {
     throw new Error('Failed to run `hatch version`: ' + e.message)
@@ -82,7 +80,7 @@ function getHatchVersion() {
 
 function getFlitVersion() {
   try {
-    const output = child_process.execSync('flit info', { encoding: 'utf-8' })
+    const output = ChildProcess.execSync('flit info', { encoding: 'utf-8' })
     const match = output.match(/^Version:\s*(.+)$/m)
     if (match) return match[1].trim()
     throw new Error('Could not extract version from `flit info` output')
@@ -94,7 +92,7 @@ function getFlitVersion() {
 
 function getSetuptoolsScmVersion() {
   try {
-    return child_process.execSync('python -m setuptools_scm', { encoding: 'utf-8' }).trim()
+    return ChildProcess.execSync('python -m setuptools_scm', { encoding: 'utf-8' }).trim()
   } catch (e) {
     throw new Error('Failed to run `setuptools_scm`: ' + e.message)
   }
@@ -103,7 +101,7 @@ function getSetuptoolsScmVersion() {
 
 function getPdmVersion() {
   try {
-    return child_process.execSync('pdm show --version', { encoding: 'utf-8' }).trim()
+    return ChildProcess.execSync('pdm show --version', { encoding: 'utf-8' }).trim()
   } catch (e) {
     throw new Error('Failed to run `pdm show --version`: ' + e.message)
   }
@@ -120,5 +118,5 @@ function getDescriptionFromReadme(readmePath = 'README.md') {
   const paragraphs = content.split(/\r?\n\r?\n/)
   const first = paragraphs.find(p => p.trim().length > 0)
 
-  return first?.replace(/^#\s*/, '').trim() || null
+  return first ? first.replace(/^#\s*/, '').trim() : null
 }
