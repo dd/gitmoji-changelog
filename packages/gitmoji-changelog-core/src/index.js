@@ -48,7 +48,7 @@ function sanitizeVersion(version) {
 function filterCommits(commits, skipMerge) {
   return commits
     .filter(commit => {
-      if (skipMerge && /^Merge (pull request|branch|tag)/i.test(commit.subject)) {
+      if (skipMerge && commit.parents.length > 1) {
         return false
       }
 
