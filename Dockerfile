@@ -1,4 +1,4 @@
-FROM node:18-alpine3.20
+FROM node:lts-alpine3.20
 ENV NODE_ENV=production
 
 # install dependencies
