@@ -11,16 +11,18 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [lts/*]
+        node-version: [18]
 
     steps:
       - name: Checkout project
         uses: actions/checkout@v1
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
           registry-url: 'https://registry.npmjs.org'
+
       - name: Install dependencies
         run: yarn install --frozen-lockfile
       - name: Publish Canary version
