@@ -183,6 +183,9 @@ If your project uses dynamic versioning (i.e., `dynamic = ["version"]` is set in
 gitmoji-changelog --preset python --version-command "hatch version"
 ```
 
+If your project uses a dynamic description (i.e., `dynamic = ["description"]` is set), the parser will take the first line from your README file as the description.
+
+
 ### Add a preset
 
 A preset need to export a function. When called this function must return three mandatory information about the project in which the cli has been called. The name of the project, a short description of it and its current version.
